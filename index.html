@@ -1,70 +1,143 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Reproductor M3U8</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reproductor de Canales</title>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <style>
-    body { margin: 0; font-family: sans-serif; background: #111; color: #fff; display: flex; flex-direction: column; height: 100vh; }
-    header { background: #e74c3c; padding: 1rem; text-align: center; font-size: 1.2rem; }
-    #controls { background: #222; padding: 0.5rem; display: flex; justify-content: center; gap: 1rem; }
-    select { padding: 0.4rem; font-size: 1rem; }
-    video { width: 100%; height: 100%; background: black; flex: 1; }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #111;
+      color: white;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+    }
+    select {
+      display: block;
+      margin: 10px auto 20px auto;
+      padding: 10px;
+      width: 90%;
+      max-width: 400px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: none;
+    }
+    #canales {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .canal {
+      background: #222;
+      border-radius: 10px;
+      padding: 10px;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .canal:hover {
+      background: #333;
+    }
+    video {
+      display: block;
+      margin: 20px auto;
+      width: 90%;
+      max-width: 800px;
+      background: black;
+    }
   </style>
 </head>
 <body>
-  <header>📺 Reproductor Tele</header>
-  <div id="controls">
-    <select id="channelList"><option>Cargando canales...</option></select>
-  </div>
-  <video id="player" controls></video>
+  <h1>Mi Reproductor de Canales</h1>
+
+  <select id="selector">
+    <option value="">Selecciona un canal...</option>
+  </select>
+
+  <video id="video" controls autoplay></video>
+
+  <div id="canales">Cargando canales...</div>
 
   <script>
-    const video = document.getElementById('player');
-    const channelList = document.getElementById('channelList');
-    let allStreams = [];
+    const video = document.getElementById('video');
+    const canalesDiv = document.getElementById('canales');
+    const selector = document.getElementById('selector');
+    let canales = [];
 
-    async function loadPlaylist() {
-      const res = await fetch('playlist.m3u8');
-      const text = await res.text();
-      const lines = text.split(/\r?\n/);
-      for (let i = 0; i < lines.length; i++) {
-        if (lines[i].startsWith('#EXTINF')) {
-          const name = lines[i].split(',')[1]?.trim() || 'Canal sin nombre';
-          const url = lines[i + 1];
-          if (url && url.includes('.m3u8')) {
-            allStreams.push({ name, url });
+    function cargarPlaylist() {
+      fetch('https://corsproxy.io/?https://andresurbanoz7.github.io/repro1/playlist.m3u8')
+        .then(response => response.text())
+        .then(data => {
+          const lines = data.split('\n');
+          canales = [];
+
+          for (let i = 0; i < lines.length; i++) {
+            if (lines[i].startsWith('#EXTINF')) {
+              const nombreMatch = lines[i].match(/,(.*)$/);
+              const nombre = nombreMatch ? nombreMatch[1] : 'Canal';
+              let url = lines[i+1];
+
+              if (url && url.startsWith('http')) {
+                url = 'https://corsproxy.io/?' + url;
+                canales.push({ nombre, url });
+              }
+            }
           }
-        }
-      }
-      if (allStreams.length) {
-        channelList.innerHTML = allStreams.map((c, i) => `<option value="${i}">${c.name}</option>`).join('');
-        playStream(0); // Reproducir el primero
-      } else {
-        channelList.innerHTML = '<option>No se encontraron streams</option>';
-      }
+
+          mostrarCanales(canales);
+        })
+        .catch(error => {
+          canalesDiv.innerHTML = 'No se pudo cargar la playlist. :(';
+          console.error('Error:', error);
+        });
     }
 
-    function playStream(index) {
-      const { url, name } = allStreams[index];
+    function mostrarCanales(lista) {
+      canalesDiv.innerHTML = '';
+      selector.innerHTML = '<option value="">Selecciona un canal...</option>';
+      lista.forEach((canal, index) => {
+        const canalDiv = document.createElement('div');
+        canalDiv.className = 'canal';
+        canalDiv.innerHTML = `<p>${canal.nombre}</p>`;
+        canalDiv.onclick = () => cargarCanal(canal.url);
+        canalesDiv.appendChild(canalDiv);
+
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = canal.nombre;
+        selector.appendChild(option);
+      });
+    }
+
+    function cargarCanal(url) {
       if (Hls.isSupported()) {
+        if (window.hls) {
+          window.hls.destroy();
+        }
         const hls = new Hls();
         hls.loadSource(url);
         hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+        window.hls = hls;
       } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
         video.src = url;
-        video.play();
       }
     }
 
-    channelList.addEventListener('change', (e) => {
-      const index = parseInt(e.target.value);
-      if (!isNaN(index)) playStream(index);
+    selector.addEventListener('change', function() {
+      const index = this.value;
+      if (index !== '') {
+        cargarCanal(canales[index].url);
+      }
     });
 
-    window.addEventListener('load', loadPlaylist);
+    cargarPlaylist();
   </script>
 </body>
 </html>
