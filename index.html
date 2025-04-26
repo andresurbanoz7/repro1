@@ -71,21 +71,22 @@
     const selector = document.getElementById('selector');
     let canales = [];
 
-    function cargarPlaylist() {
-      fetch('https://andresurbanoz7.github.io/repro1/playlist.json')
-        .then(response => response.json())
-        .then(data => {
-          canales = data.map(c => ({
-            nombre: c.nombre,
-            url: 'https://corsproxy.io/?' + c.url
-          }));
-          mostrarCanales(canales);
-        })
-        .catch(error => {
-          canalesDiv.innerHTML = 'No se pudo cargar la playlist. :(';
-          console.error('Error:', error);
-        });
-    }
+function cargarPlaylist() {
+  fetch('https://andresurbanoz7.github.io/repro1/playlist.json')
+    .then(response => response.json())
+    .then(data => {
+      canales = data.map(c => ({
+        nombre: c.nombre,
+        url: c.url.startsWith('http') ? 'https://corsproxy.io/?' + encodeURIComponent(c.url) : c.url
+      }));
+      mostrarCanales(canales);
+    })
+    .catch(error => {
+      canalesDiv.innerHTML = 'No se pudo cargar la playlist. :(';
+      console.error('Error:', error);
+    });
+}
+
 
     function mostrarCanales(lista) {
       canalesDiv.innerHTML = '';
