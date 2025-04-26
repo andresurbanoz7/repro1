@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Reproductor de Canales</title>
+  <title>Tele </title>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <style>
     body {
@@ -72,25 +72,13 @@
     let canales = [];
 
     function cargarPlaylist() {
-      fetch('https://corsproxy.io/?https://andresurbanoz7.github.io/repro1/playlist.m3u8')
-        .then(response => response.text())
+      fetch('https://andresurbanoz7.github.io/repro1/playlist.json')
+        .then(response => response.json())
         .then(data => {
-          const lines = data.split('\n');
-          canales = [];
-
-          for (let i = 0; i < lines.length; i++) {
-            if (lines[i].startsWith('#EXTINF')) {
-              const nombreMatch = lines[i].match(/,(.*)$/);
-              const nombre = nombreMatch ? nombreMatch[1] : 'Canal';
-              let url = lines[i+1];
-
-              if (url && url.startsWith('http')) {
-                url = 'https://corsproxy.io/?' + url;
-                canales.push({ nombre, url });
-              }
-            }
-          }
-
+          canales = data.map(c => ({
+            nombre: c.nombre,
+            url: 'https://corsproxy.io/?' + c.url
+          }));
           mostrarCanales(canales);
         })
         .catch(error => {
@@ -141,3 +129,4 @@
   </script>
 </body>
 </html>
+
