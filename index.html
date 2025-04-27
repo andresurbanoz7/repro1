@@ -2,22 +2,24 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Repro2 TV</title>
+  <title>Repro2 Películas 🎬</title>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <style>
-    body { background-color: #000; color: white; font-family: Arial, sans-serif; text-align: center; padding: 20px; }
-    select, button { margin: 10px; padding: 10px; font-size: 16px; }
-    video { width: 90%; max-width: 800px; margin-top: 20px; background: black; }
+    body { background: #000; color: white; font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+    select, input { margin: 10px; padding: 10px; font-size: 16px; width: 80%; max-width: 400px; }
+    video { width: 90%; max-width: 800px; height: auto; margin-top: 20px; background: black; }
   </style>
 </head>
 <body>
 
-<h1>Repro2 TV 📺</h1>
+<h1>Repro2 Películas 🎬</h1>
 
-<select id="canalSelect">
-  <option value="">Selecciona un canal</option>
-  <option value="fox sports español 2">Fox Sports Español 2</option>
-  <option value="chiquilines tv">Chiquilines TV</option>
+<input type="text" id="search" placeholder="Buscar película...">
+
+<br>
+
+<select id="peliculaSelect">
+  <option value="">Selecciona una película</option>
 </select>
 
 <br>
@@ -25,18 +27,42 @@
 <video id="video" controls autoplay></video>
 
 <script>
-const canales = {
-  "fox sports español 2": "https://broken-brook-b872.andreseliecerramirez.workers.dev/ver?canal=fox%20sports%20español%202",
-  "chiquilines tv": "https://broken-brook-b872.andreseliecerramirez.workers.dev/ver?canal=chiquilines%20tv"
-};
+// Cargar el playlist
+let peliculas = [];
+fetch('playlist_peliculas.json')
+  .then(response => response.json())
+  .then(data => {
+    peliculas = data;
+    cargarPeliculas(data);
+  });
+
+function cargarPeliculas(data) {
+  const select = document.getElementById('peliculaSelect');
+  select.innerHTML = '<option value="">Selecciona una película</option>';
+  data.forEach(p => {
+    const option = document.createElement('option');
+    option.value = p.url;
+    option.textContent = p.nombre;
+    select.appendChild(option);
+  });
+}
 
 const video = document.getElementById('video');
-const canalSelect = document.getElementById('canalSelect');
+const peliculaSelect = document.getElementById('peliculaSelect');
+const search = document.getElementById('search');
 
-canalSelect.addEventListener('change', function() {
-  const url = canales[this.value];
+peliculaSelect.addEventListener('change', function() {
+  reproducir(this.value);
+});
+
+search.addEventListener('input', function() {
+  const filtro = this.value.toLowerCase();
+  const filtradas = peliculas.filter(p => p.nombre.toLowerCase().includes(filtro));
+  cargarPeliculas(filtradas);
+});
+
+function reproducir(url) {
   if (!url) return;
-
   if (Hls.isSupported()) {
     const hls = new Hls();
     hls.loadSource(url);
@@ -44,7 +70,7 @@ canalSelect.addEventListener('change', function() {
   } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
     video.src = url;
   }
-});
+}
 </script>
 
 </body>
