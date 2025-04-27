@@ -2,132 +2,50 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tele </title>
+  <title>Repro2 TV</title>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #111;
-      color: white;
-      margin: 0;
-      padding: 20px;
-    }
-    h1 {
-      text-align: center;
-    }
-    select {
-      display: block;
-      margin: 10px auto 20px auto;
-      padding: 10px;
-      width: 90%;
-      max-width: 400px;
-      font-size: 16px;
-      border-radius: 10px;
-      border: none;
-    }
-    #canales {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-    }
-    .canal {
-      background: #222;
-      border-radius: 10px;
-      padding: 10px;
-      width: 90%;
-      max-width: 400px;
-      text-align: center;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-    .canal:hover {
-      background: #333;
-    }
-    video {
-      display: block;
-      margin: 20px auto;
-      width: 90%;
-      max-width: 800px;
-      background: black;
-    }
+    body { background-color: #000; color: white; font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+    select, button { margin: 10px; padding: 10px; font-size: 16px; }
+    video { width: 90%; max-width: 800px; margin-top: 20px; background: black; }
   </style>
 </head>
 <body>
-  <h1>Mi Reproductor de Canales</h1>
 
-  <select id="selector">
-    <option value="">Selecciona un canal...</option>
-  </select>
+<h1>Repro2 TV 📺</h1>
 
-  <video id="video" controls autoplay></video>
+<select id="canalSelect">
+  <option value="">Selecciona un canal</option>
+  <option value="fox sports español 2">Fox Sports Español 2</option>
+  <option value="chiquilines tv">Chiquilines TV</option>
+</select>
 
-  <div id="canales">Cargando canales...</div>
+<br>
 
-  <script>
-    const video = document.getElementById('video');
-    const canalesDiv = document.getElementById('canales');
-    const selector = document.getElementById('selector');
-    let canales = [];
+<video id="video" controls autoplay></video>
 
-function cargarPlaylist() {
-  fetch('https://andresurbanoz7.github.io/repro1/playlist.json')
-    .then(response => response.json())
-    .then(data => {
-      canales = data.map(c => ({
-        nombre: c.nombre,
-        url: c.url.startsWith('http') ? 'https://corsproxy.io/?' + encodeURIComponent(c.url) : c.url
-      }));
-      mostrarCanales(canales);
-    })
-    .catch(error => {
-      canalesDiv.innerHTML = 'No se pudo cargar la playlist. :(';
-      console.error('Error:', error);
-    });
-}
+<script>
+const canales = {
+  "fox sports español 2": "https://broken-brook-b872.andreseliecerramirez.workers.dev/ver?canal=fox%20sports%20español%202",
+  "chiquilines tv": "https://broken-brook-b872.andreseliecerramirez.workers.dev/ver?canal=chiquilines%20tv"
+};
 
+const video = document.getElementById('video');
+const canalSelect = document.getElementById('canalSelect');
 
-    function mostrarCanales(lista) {
-      canalesDiv.innerHTML = '';
-      selector.innerHTML = '<option value="">Selecciona un canal...</option>';
-      lista.forEach((canal, index) => {
-        const canalDiv = document.createElement('div');
-        canalDiv.className = 'canal';
-        canalDiv.innerHTML = `<p>${canal.nombre}</p>`;
-        canalDiv.onclick = () => cargarCanal(canal.url);
-        canalesDiv.appendChild(canalDiv);
+canalSelect.addEventListener('change', function() {
+  const url = canales[this.value];
+  if (!url) return;
 
-        const option = document.createElement('option');
-        option.value = index;
-        option.textContent = canal.nombre;
-        selector.appendChild(option);
-      });
-    }
+  if (Hls.isSupported()) {
+    const hls = new Hls();
+    hls.loadSource(url);
+    hls.attachMedia(video);
+  } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+    video.src = url;
+  }
+});
+</script>
 
-    function cargarCanal(url) {
-      if (Hls.isSupported()) {
-        if (window.hls) {
-          window.hls.destroy();
-        }
-        const hls = new Hls();
-        hls.loadSource(url);
-        hls.attachMedia(video);
-        window.hls = hls;
-      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        video.src = url;
-      }
-    }
-
-    selector.addEventListener('change', function() {
-      const index = this.value;
-      if (index !== '') {
-        cargarCanal(canales[index].url);
-      }
-    });
-
-    cargarPlaylist();
-  </script>
 </body>
 </html>
-
