@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chile TV en Vivo</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #0f0f0f; color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        .header { padding: 10px 20px; background: #1a1a1a; border-bottom: 2px solid #cc0000; }
+        #player-container { flex: 1; background: black; display: flex; justify-content: center; align-items: center; position: sticky; top: 0; z-index: 100; }
+        video { width: 100%; max-width: 900px; aspect-ratio: 16/9; }
+        #playlist { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; padding: 20px; overflow-y: auto; }
+        .canal { background: #222; border-radius: 8px; padding: 10px; text-align: center; cursor: pointer; transition: 0.2s; border: 1px solid transparent; }
+        .canal:hover { background: #333; border-color: #cc0000; transform: translateY(-3px); }
+        .canal img { width: 80px; height: 80px; object-fit: contain; margin-bottom: 8px; }
+        .canal p { font-size: 11px; margin: 0; font-weight: bold; color: #ddd; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h2>TV Cenco2 Online</h2>
+</div>
+
+<div id="player-container">
+    <video id="video" controls autoplay></video>
+</div>
+
+<div id="playlist">
+    </div>
+
+<script>
+    const video = document.getElementById('video');
+    const playlist = document.getElementById('playlist');
+    const hls = new Hls();
+
+    function play(url) {
+        if (Hls.isSupported()) {
+            hls.loadSource(url);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = url;
+            video.play();
+        }
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+
+    async function cargarM3U() {
+        try {
+            // Reemplaza 'CL(1).m3u' por el nombre exacto de tu archivo en GitHub
+            const response = await fetch('CL(1).m3u');
+            const text = await response.text();
+            const lines = text.split('\n');
+            
+            let currentCanal = {};
+
+            lines.forEach(line => {
+                if (line.startsWith('#EXTINF')) {
+                    // Extraer nombre y logo usando expresiones regulares sencillas
+                    const nameMatch = line.match(/tvg-name="([^"]+)"/);
+                    const logoMatch = line.match(/tvg-logo="([^"]+)"/);
+                    currentCanal.name = nameMatch ? nameMatch[1] : "Canal sin nombre";
+                    currentCanal.logo = logoMatch ? logoMatch[1] : "https://via.placeholder.com/80";
+                } else if (line.startsWith('http')) {
+                    const url = line.trim();
+                    const btn = document.createElement('div');
+                    btn.className = 'canal';
+                    btn.innerHTML = `<img src="${currentCanal.logo}"><p>${currentCanal.name}</p>`;
+                    btn.onclick = () => play(url);
+                    playlist.appendChild(btn);
+                    currentCanal = {}; // Reset para el siguiente
+                }
+            });
+        } catch (error) {
+            console.error("Error cargando la lista:", error);
+            playlist.innerHTML = "<p>Error al cargar la lista M3U. Asegúrate de que el archivo esté en la misma carpeta.</p>";
+        }
+    }
+
+    cargarM3U();
+</script>
+
+</body>
+</html>
