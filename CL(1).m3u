@@ -1,6 +1,4 @@
 #EXTM3U 
-#EXTINF:-1 tvg-id="156" tvg-name="+ TnT Sports CL" tvg-logo="https://static.cdnlogo.com/logos/t/1/tnt-sports.png", + Canal del Futbol.CL ✪ | CL
-https://clbpktstvhls-1.clarovideo.com/bpk-tv/TNTSP2/hls_fk/index.m3u8
 #EXTINF:-1 tvg-id="4" tvg-name="Retro Plus TV" tvg-logo="https://cdn.m3u.cl/logo/4_Retro_Plus_TV.png", Retro Plus TV ✪ | CL
 https://tls-cl.cdnz.cl/retroplustvuno/live/playlist.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="5" tvg-name="Retro Plus TV Señal 2" tvg-logo="https://cdn.m3u.cl/logo/5_Retro_Plus_TV_Senal_2.png", Retro Plus TV Señal 2 ✪ | CL
