@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chile TV Online</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        body { font-family: sans-serif; background: #1a1a1a; color: white; margin: 0; padding: 20px; }
+        .container { max-width: 1000px; margin: auto; text-align: center; }
+        video { width: 100%; max-height: 500px; background: black; border-radius: 8px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px; margin-top: 20px; }
+        .canal-card { background: #333; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.3s; }
+        .canal-card:hover { background: #cc0000; transform: scale(1.05); }
+        .canal-card img { width: 100%; height: auto; border-radius: 4px; margin-bottom: 5px; }
+        .canal-card p { font-size: 12px; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        h1 { color: #cc0000; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Chile TV Player</h1>
+    <video id="video" controls autoplay></video>
+    <div class="grid" id="lista-canales">
+        </div>
+</div>
+
+<script>
+    const video = document.getElementById('video');
+    const grid = document.getElementById('lista-canales');
+    const hls = new Hls();
+
+    // Función para reproducir un canal
+    function playChannel(url) {
+        if (Hls.isSupported()) {
+            hls.loadSource(url);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            // Soporte nativo para Safari
+            video.src = url;
+            video.addEventListener('loadedmetadata', () => video.play());
+        }
+    }
+
+    // Cargar canales desde el JSON
+    fetch('canales.json')
+        .then(response => response.json())
+        .then(data => {
+            data.forEach(canal => {
+                const card = document.createElement('div');
+                card.className = 'canal-card';
+                card.onclick = () => playChannel(canal.url);
+                card.innerHTML = `
+                    <img src="${canal.logo}" alt="${canal.name}" onerror="this.src='https://via.placeholder.com/100?text=TV'">
+                    <p>${canal.name}</p>
+                `;
+                grid.appendChild(card);
+            });
+            // Reproducir el primero por defecto
+            if(data.length > 0) playChannel(data[0].url);
+        });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,27 @@
+[
+  {
+    "name": "Retro Plus TV",
+    "logo": "https://cdn.m3u.cl/logo/4_Retro_Plus_TV.png",
+    "url": "https://tls-cl.cdnz.cl/retroplustvuno/live/playlist.m3u8?PlaylistM3UCL"
+  },
+  {
+    "name": "VClassicTV",
+    "logo": "https://cdn.m3u.cl/logo/1112_EnerGeek_FAN.png",
+    "url": "https://5eaccbab48461.streamlock.net:1936/8112/8112/playlist.m3u8?PlaylistM3UCL"
+  },
+  {
+    "name": "CHV",
+    "logo": "https://cdn.m3u.cl/logo/1153_CHV.png",
+    "url": "https://mdstrm.com/live-stream-playlist/6491ced935a5833c47dd7f41.m3u8?PlaylistM3UCL"
+  },
+  {
+    "name": "TVN",
+    "logo": "https://cdn.m3u.cl/logo/452_TVN.png",
+    "url": "https://mdstrm.com/live-stream-playlist/57a498c4d7b86d600e5461cb.m3u8?PlaylistM3UCL"
+  },
+  {
+    "name": "Mega",
+    "logo": "https://cdn.m3u.cl/logo/455_Mega.png",
+    "url": "https://unlimited2-cl-isp.dps.live/mega/mega.smil/playlist.m3u8?PlaylistM3UCL"
+  }
+]
