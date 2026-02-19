@@ -3,64 +3,167 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chile TV Online</title>
+    <title>Chile TV Pro Player</title>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
-        body { font-family: sans-serif; background: #1a1a1a; color: white; margin: 0; padding: 20px; }
-        .container { max-width: 1000px; margin: auto; text-align: center; }
-        video { width: 100%; max-height: 500px; background: black; border-radius: 8px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px; margin-top: 20px; }
-        .canal-card { background: #333; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.3s; }
-        .canal-card:hover { background: #cc0000; transform: scale(1.05); }
-        .canal-card img { width: 100%; height: auto; border-radius: 4px; margin-bottom: 5px; }
-        .canal-card p { font-size: 12px; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        h1 { color: #cc0000; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0f0f0f; color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        
+        /* Cabecera */
+        .header { padding: 10px 20px; background: #1a1a1a; border-bottom: 2px solid #cc0000; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Contenedor del reproductor y controles */
+        #player-container { 
+            background: black; 
+            display: flex; 
+            flex-direction: column;
+            align-items: center; 
+            position: sticky; 
+            top: 0; 
+            z-index: 100;
+            padding-bottom: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        video { width: 100%; max-width: 900px; aspect-ratio: 16/9; }
+
+        /* Estilo de los Botones de Navegación */
+        .controls { margin-top: 10px; display: flex; gap: 20px; align-items: center; }
+        .nav-btn { 
+            background: #cc0000; color: white; border: none; padding: 10px 20px; 
+            border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s;
+        }
+        .nav-btn:hover { background: #ff0000; transform: scale(1.05); }
+        .nav-btn:disabled { background: #555; cursor: not-allowed; }
+        #channel-info { font-size: 14px; font-weight: bold; color: #ccc; }
+
+        /* Lista de canales */
+        #playlist { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; padding: 20px; overflow-y: auto; }
+        .canal { background: #222; border-radius: 8px; padding: 10px; text-align: center; cursor: pointer; transition: 0.2s; border: 2px solid transparent; }
+        .canal:hover { background: #333; border-color: #cc0000; }
+        .canal.active { border-color: #ff0000; background: #444; }
+        .canal img { width: 60px; height: 60px; object-fit: contain; margin-bottom: 8px; }
+        .canal p { font-size: 11px; margin: 0; font-weight: bold; color: #ddd; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>Chile TV Player</h1>
-    <video id="video" controls autoplay></video>
-    <div class="grid" id="lista-canales">
-        </div>
+<div class="header">
+    <h2 style="margin:0; font-size: 1.2em;">TV Chilena Online</h2>
+    <div id="status">Cargando canales...</div>
 </div>
+
+<div id="player-container">
+    <video id="video" controls autoplay></video>
+    
+    <div class="controls">
+        <button class="nav-btn" id="btn-prev">◀ Anterior</button>
+        <div id="channel-info">Selecciona un canal</div>
+        <button class="nav-btn" id="btn-next">Siguiente ▶</button>
+    </div>
+</div>
+
+<div id="playlist">
+    </div>
 
 <script>
     const video = document.getElementById('video');
-    const grid = document.getElementById('lista-canales');
+    const playlistContainer = document.getElementById('playlist');
+    const channelInfo = document.getElementById('channel-info');
+    const statusText = document.getElementById('status');
+    const btnPrev = document.getElementById('btn-prev');
+    const btnNext = document.getElementById('btn-next');
+    
     const hls = new Hls();
+    let listaCanales = []; // Aquí guardaremos todos los canales
+    let indiceActual = -1;
 
-    // Función para reproducir un canal
-    function playChannel(url) {
+    // Función para reproducir un canal por su índice en la lista
+    function reproducirPorIndice(index) {
+        if (index < 0 || index >= listaCanales.length) return;
+        
+        indiceActual = index;
+        const canal = listaCanales[index];
+        const url = canal.url;
+
+        // Actualizar UI
+        channelInfo.innerText = canal.name;
+        document.querySelectorAll('.canal').forEach((el, i) => {
+            el.classList.toggle('active', i === index);
+        });
+
+        // Cargar video
         if (Hls.isSupported()) {
             hls.loadSource(url);
             hls.attachMedia(video);
             hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            // Soporte nativo para Safari
             video.src = url;
-            video.addEventListener('loadedmetadata', () => video.play());
+            video.play();
+        }
+
+        // Hacer scroll suave al reproductor
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+
+    // Botones de navegación
+    btnPrev.onclick = () => {
+        let nuevoIndice = indiceActual - 1;
+        if (nuevoIndice < 0) nuevoIndice = listaCanales.length - 1; // Volver al final
+        reproducirPorIndice(nuevoIndice);
+    };
+
+    btnNext.onclick = () => {
+        let nuevoIndice = indiceActual + 1;
+        if (nuevoIndice >= listaCanales.length) nuevoIndice = 0; // Volver al inicio
+        reproducirPorIndice(nuevoIndice);
+    };
+
+    async function cargarM3U() {
+        try {
+            // Buscamos el archivo m3u [cite: 1]
+            const response = await fetch('CL(1).m3u'); 
+            const text = await response.text();
+            const lines = text.split('\n');
+            
+            let tempCanal = {};
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                
+                if (line.startsWith('#EXTINF')) {
+                    // Extraer nombre y logo del archivo [cite: 3, 5]
+                    const nameMatch = line.match(/tvg-name="([^"]+)"/);
+                    const logoMatch = line.match(/tvg-logo="([^"]+)"/);
+                    tempCanal.name = nameMatch ? nameMatch[1] : "Canal " + (listaCanales.length + 1);
+                    tempCanal.logo = logoMatch ? logoMatch[1] : "https://via.placeholder.com/80";
+                } else if (line.startsWith('http')) {
+                    // Guardar URL y añadir el canal a nuestra lista interna
+                    tempCanal.url = line;
+                    listaCanales.push({...tempCanal});
+                    
+                    // Crear el botón en la cuadrícula
+                    const currentIndex = listaCanales.length - 1;
+                    const btn = document.createElement('div');
+                    btn.className = 'canal';
+                    btn.innerHTML = `<img src="${tempCanal.logo}"><p>${tempCanal.name}</p>`;
+                    btn.onclick = () => reproducirPorIndice(currentIndex);
+                    playlistContainer.appendChild(btn);
+                    
+                    tempCanal = {}; // Limpiar para el siguiente canal
+                }
+            }
+            
+            statusText.innerText = listaCanales.length + " canales cargados";
+            
+            // Reproducir el primer canal automáticamente
+            if(listaCanales.length > 0) reproducirPorIndice(0);
+
+        } catch (error) {
+            console.error("Error:", error);
+            statusText.innerText = "Error al cargar M3U";
         }
     }
 
-    // Cargar canales desde el JSON
-    fetch('canales.json')
-        .then(response => response.json())
-        .then(data => {
-            data.forEach(canal => {
-                const card = document.createElement('div');
-                card.className = 'canal-card';
-                card.onclick = () => playChannel(canal.url);
-                card.innerHTML = `
-                    <img src="${canal.logo}" alt="${canal.name}" onerror="this.src='https://via.placeholder.com/100?text=TV'">
-                    <p>${canal.name}</p>
-                `;
-                grid.appendChild(card);
-            });
-            // Reproducir el primero por defecto
-            if(data.length > 0) playChannel(data[0].url);
-        });
+    cargarM3U();
 </script>
 
 </body>
